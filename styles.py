@@ -1,9 +1,9 @@
 
 def get_status_color(value: str):
-    if value in ["PASS", 1]:
+    if value in ["PASS", True]:
         return "color: lime"
 
-    if value in ["FAIL", -1]:
+    if value in ["FAIL", False]:
         return "color: red"
 
     return ""

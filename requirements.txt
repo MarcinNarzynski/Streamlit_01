@@ -2,3 +2,4 @@ streamlit
 pandas
 SQLAlchemy
 mysql-connector-python
+plotly
