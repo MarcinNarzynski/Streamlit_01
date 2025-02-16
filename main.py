@@ -1,13 +1,15 @@
 import time
 
-import numpy as np
 import pandas as pd
-from sqlalchemy import create_engine, text
 import streamlit as st
-from streamlit.elements.lib.column_types import DateColumn, Column, LinkColumn, BarChartColumn, CheckboxColumn, ListColumn
+from sqlalchemy import create_engine
+from streamlit.elements.lib.column_types import DateColumn, Column, LinkColumn, ListColumn
 
 from styles import get_status_color
 from ui_components.gauge import plot_gauge
+
+# To run type in command line: streamlit run main.py
+
 
 timer = time.time()
 
