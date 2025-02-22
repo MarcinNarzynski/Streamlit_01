@@ -2,52 +2,33 @@ import time
 
 import pandas as pd
 import streamlit as st
-from sqlalchemy import create_engine
+from streamlit import container
 from streamlit.elements.lib.column_types import DateColumn, Column, LinkColumn, ListColumn
+from streamlit_extras.bottom_container import bottom
 
+import db_operations
 from styles import get_status_color
 from ui_components.gauge import plot_gauge
 
 # To run type in command line: streamlit run main.py
 
-
 timer = time.time()
 
 st.set_page_config(page_title="Night Tests", page_icon=":chart:", layout="wide")
 
-st.title('Night Tests')
-st.markdown("_Demo version 0.6_")
-dashboard_load_state = st.text('Refreshing dashboard...')
-
-db_url = "mysql+mysqlconnector://{USER}:{PWD}@{HOST}/{DBNAME}"
-db_url = db_url.format(
-    USER = "root",
-    PWD = "1000",
-    HOST = "localhost:3306",
-    DBNAME = "marcin_db"
-)
-
-engine = create_engine(db_url, echo=False)
-
-with engine.begin() as conn:
-    lib_test_statuses = pd.read_sql_table(
-        table_name='lib_night_tests',
-        con=conn
-    )
+st.title('Night Tests', )
+left_column, mid_column, right_column = st.columns((1,8,1))
+bottom_left_column, bottom_mid_column, bottom_right_column = st.columns((1,8,1))
+with mid_column:
+    with st.container(border=True):
+        st.markdown("_Demo version 0.6_")
 
 
-# sql_query = text("""select *
-#                 from lib_night_tests
-#                 # where test_status = 'PASS'
-#                 # group by lib_name, test_datetime, test_status
-#                 order by test_datetime desc
-#                 """)
+db_operations.initialize_db_connection()
+lib_test_statuses = db_operations.read_table_from_db("lib_night_tests")
 
-# with engine.begin() as conn:
-#     all_tests = pd.read_sql_query(
-#         sql=sql_query,
-#         con=conn
-#     )
+# db_operations_alchemy.initialize_db_connection()
+# lib_test_statuses = db_operations_alchemy.read_table_from_db("lib_night_tests")
 
 
 # https://unicode.org/emoji/charts/full-emoji-list.html
@@ -71,13 +52,11 @@ df_groupped_all = df_sorted.groupby(by='lib_name').agg(
 
 print(f"\nDB GROUPPED ALL: \n{df_groupped_all} \n{len(df_groupped_all)=}")
 
-
 df_passed = df_groupped_all[df_groupped_all['test_status'] == 'PASS']
 passed_count = df_passed.shape[0]
 
 df_failed = df_groupped_all[df_groupped_all['test_status'] == 'FAIL']
 failed_count = df_failed.shape[0]
-
 
 df_columns = {
     "lib_name": Column("Library", width="medium"),
@@ -86,16 +65,19 @@ df_columns = {
     "report_url": LinkColumn("Report URL", width="medium"),
     "test_history": ListColumn("Test History", width=None),
 }
-left_column, mid_column, right_column = st.columns((1,8,1))
 
 with mid_column:
-    plot_gauge(indicator_value=failed_count, indicator_color="red", indicator_title="Failed tests", max_bound=failed_count+passed_count)
+    with container(border=True):
+        plot_gauge(indicator_value=failed_count, indicator_color="red", indicator_title="Failed tests", max_bound=failed_count+passed_count)
 
-    st.dataframe(df_groupped_all.style.apply(lambda x: x.map(get_status_color), axis=None),
-                 column_config=df_columns,
-                 use_container_width=True,
-                 column_order=["lib_name", "test_status", "test_datetime", "report_url", "test_history"]
-                 )
+        st.dataframe(df_groupped_all.style.apply(lambda x: x.map(get_status_color), axis=None),
+                     column_config=df_columns,
+                     use_container_width=True,
+                     column_order=["lib_name", "test_status", "test_datetime", "report_url", "test_history"]
+                     )
+
+with bottom():
+    bottom_messages = st.text('Refreshing dashboard...')
 
 timer_end = time.time() - timer
-dashboard_load_state.text(f"Refreshing dashboard done in {timer_end:.2f} seconds.")
+bottom_messages.text(f"Refreshing dashboard done in {timer_end:.2f} seconds.")
